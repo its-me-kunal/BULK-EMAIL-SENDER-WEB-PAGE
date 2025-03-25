@@ -52,7 +52,7 @@
     const status = document.getElementById("auth-status");
     const loginBtn = document.getElementById("login-btn");
 
-    // Reset status message & disable login button
+    
     status.textContent = "";
     status.style.color = "red";
     loginBtn.disabled = true;
@@ -67,7 +67,7 @@
             body: JSON.stringify({ email, password })
         });
 
-        // ✅ Check if response is valid JSON
+        
         let result;
         try {
             result = await response.json();
@@ -75,17 +75,17 @@
             throw new Error("❌ Server error: Invalid response format.");
         }
 
-        // ✅ Handle error responses properly
+        
         if (!response.ok) throw new Error(result.message || "❌ Login failed.");
 
-        // ✅ Store the JWT token securely
+       
         localStorage.setItem("token", result.token);
 
-        // ✅ Show success message
+        
         status.textContent = "✅ Login successful! Redirecting...";
         status.style.color = "green";
 
-        // ✅ Redirect after 2 seconds
+        
         setTimeout(() => {
             window.location.href = "index.html";
         }, 2000);
@@ -93,7 +93,6 @@
     } catch (error) {
         status.textContent = error.message;
     } finally {
-        // ✅ Re-enable login button after processing
         loginBtn.disabled = false;
         loginBtn.textContent = "🚀 Login";
     }
