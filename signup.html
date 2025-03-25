@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Bulk Email Sender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+    <div class="w-full max-w-md shadow-lg p-8 bg-white rounded-2xl border border-gray-300">
+        <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">📝 Sign Up</h2>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 font-medium">Email</label>
+            <input type="email" id="email" placeholder="Enter your email..." class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 font-medium">Password</label>
+            <input type="password" id="password" placeholder="Enter your password..." class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <button onclick="signupUser()" class="w-full bg-green-600 text-white py-3 rounded-lg shadow-md font-semibold text-lg hover:bg-green-700 transition">🚀 Sign Up</button>
+
+        <p class="mt-4 text-center text-gray-700">Already have an account? <a href="auth.html" class="text-blue-600 font-semibold">Login</a></p>
+
+        <p id="auth-status" class="mt-4 text-center text-red-600"></p>
+    </div>
+
+    <script>
+        async function signupUser() {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const status = document.getElementById("auth-status");
+
+            try {
+                if (!email || !password) throw new Error("All fields are required.");
+                
+                const response = await fetch("http://localhost:5000/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+
+                status.textContent = "✅ Signup successful! Redirecting...";
+                status.style.color = "green";
+
+                // Redirect to login page after 2 seconds
+                setTimeout(() => {
+                    window.location.href = "auth.html";
+                }, 2000);
+            } catch (error) {
+                status.textContent = `❌ ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -12,48 +12,93 @@
 
         <div class="mb-4">
             <label class="block text-gray-700 font-medium">Email</label>
-            <input type="email" id="email" placeholder="Enter your email..." class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition">
+            <input type="email" id="email" placeholder="Enter your email..." 
+                class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" 
+                required>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-4 relative">
             <label class="block text-gray-700 font-medium">Password</label>
-            <input type="password" id="password" placeholder="Enter your password..." class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition">
+            <input type="password" id="password" placeholder="Enter your password..." 
+                class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" 
+                required>
+            <button type="button" id="toggle-password" 
+                class="absolute right-3 top-12 text-gray-600 hover:text-gray-900 focus:outline-none">
+                👁️
+            </button>
         </div>
 
-        <button onclick="loginUser()" class="w-full bg-blue-600 text-white py-3 rounded-lg shadow-md font-semibold text-lg hover:bg-blue-700 transition">🚀 Login</button>
+        <button id="login-btn" onclick="loginUser()" 
+            class="w-full bg-blue-600 text-white py-3 rounded-lg shadow-md font-semibold text-lg hover:bg-blue-700 transition">
+            🚀 Login
+        </button>
 
-        <p class="mt-4 text-center text-gray-700">Don't have an account? <a href="signup.html" class="text-blue-600 font-semibold">Sign Up</a></p>
+        <p class="mt-4 text-center text-gray-700">Don't have an account? 
+            <a href="signup.html" class="text-blue-600 font-semibold">Sign Up</a>
+        </p>
 
         <p id="auth-status" class="mt-4 text-center text-red-600"></p>
     </div>
 
     <script>
+        document.getElementById("toggle-password").addEventListener("click", function() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+        });
+
         async function loginUser() {
-            const email = document.getElementById("email").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const status = document.getElementById("auth-status");
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const status = document.getElementById("auth-status");
+    const loginBtn = document.getElementById("login-btn");
 
-            try {
-                if (!email || !password) throw new Error("All fields are required.");
-                
-                const response = await fetch("http://localhost:5000/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password })
-                });
+    // Reset status message & disable login button
+    status.textContent = "";
+    status.style.color = "red";
+    loginBtn.disabled = true;
+    loginBtn.textContent = "🔄 Logging in...";
 
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
+    try {
+        if (!email || !password) throw new Error("⚠️ All fields are required.");
 
-                // Store auth token
-                localStorage.setItem("token", result.token);
-                
-                // Redirect to main page
-                window.location.href = "index.html";
-            } catch (error) {
-                status.textContent = `❌ ${error.message}`;
-            }
+        const response = await fetch("http://localhost:5000/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        // ✅ Check if response is valid JSON
+        let result;
+        try {
+            result = await response.json();
+        } catch (err) {
+            throw new Error("❌ Server error: Invalid response format.");
         }
+
+        // ✅ Handle error responses properly
+        if (!response.ok) throw new Error(result.message || "❌ Login failed.");
+
+        // ✅ Store the JWT token securely
+        localStorage.setItem("token", result.token);
+
+        // ✅ Show success message
+        status.textContent = "✅ Login successful! Redirecting...";
+        status.style.color = "green";
+
+        // ✅ Redirect after 2 seconds
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 2000);
+
+    } catch (error) {
+        status.textContent = error.message;
+    } finally {
+        // ✅ Re-enable login button after processing
+        loginBtn.disabled = false;
+        loginBtn.textContent = "🚀 Login";
+    }
+}
+
     </script>
 </body>
 </html>

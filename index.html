@@ -18,9 +18,11 @@
         }
     </style>
 </head>
-<body class="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 p-6">
-    <div class="w-full max-w-3xl shadow-lg p-8 bg-white rounded-2xl border border-gray-300 transition-transform transform hover:scale-105 duration-300">
+<body class="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 p-6" onload="checkAuth()">
+    <div class="w-full max-w-3xl shadow-lg p-8 bg-white rounded-2xl border border-gray-300 transition-transform transform hover:scale-105 duration-300 relative">
         <h2 class="text-4xl font-extrabold text-gray-800 mb-6 text-center">📧 Bulk Email Sender</h2>
+        
+        <button onclick="logout()" class="absolute top-5 right-5 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Logout</button>
 
         <div class="mb-4">
             <label class="block text-gray-700 font-medium">Upload Recipient List (Excel, CSV, TXT)</label>
@@ -52,6 +54,18 @@
     </div>
 
     <script>
+        function checkAuth() {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "auth.html";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "auth.html";
+        }
+
         function updateFileName() {
             const fileInput = document.getElementById("email-file");
             const fileNameDisplay = document.getElementById("file-name");
@@ -66,20 +80,29 @@
             const btnText = document.getElementById("btn-text");
             const loading = document.getElementById("loading");
             const successPopup = document.getElementById("success-popup");
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                window.location.href = "auth.html";
+                return;
+            }
 
             try {
                 if (!fileInput) throw new Error("Please upload a recipient list.");
                 if (!subject) throw new Error("Subject is required.");
                 if (!message) throw new Error("Message is required.");
                 
-                // Show Loading State
                 btnText.classList.add("hidden");
                 loading.classList.remove("hidden");
                 status.textContent = "Uploading file...";
 
                 const formData = new FormData();
                 formData.append("file", fileInput);
-                const uploadResponse = await fetch("http://localhost:5000/upload", { method: "POST", body: formData });
+                const uploadResponse = await fetch("http://localhost:5000/upload", { 
+                    method: "POST", 
+                    body: formData,
+                    headers: { "Authorization": token }
+                });
                 if (!uploadResponse.ok) throw new Error("File upload failed.");
 
                 const uploadData = await uploadResponse.json();
@@ -89,14 +112,13 @@
                 status.textContent = `Sending ${emails.length} emails...`;
                 const sendResponse = await fetch("http://localhost:5000/send-emails", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json", "Authorization": token },
                     body: JSON.stringify({ emails, subject, message })
                 });
 
                 const result = await sendResponse.json();
                 status.textContent = `✅ ${result.message}`;
 
-                // Show success notification with swing animation
                 successPopup.classList.remove("hidden", "opacity-0");
                 successPopup.classList.add("opacity-100", "swing");
                 setTimeout(() => {
