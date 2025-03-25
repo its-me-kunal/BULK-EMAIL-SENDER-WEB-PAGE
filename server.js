@@ -15,7 +15,7 @@ const { readFile, utils } = xlsx;
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
-// ✅ CORS Configuration
+
 app.use(cors({
     origin: ["https://its-me-kunal.github.io","http://127.0.0.1:5500", "http://localhost:3000"],
     methods: ["GET", "POST", "OPTIONS"],
@@ -25,20 +25,20 @@ app.use(cors({
 app.use(json());
 app.use(urlencoded({ extended: true }));
 
-// ✅ Validate .env Variables
+
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.JWT_SECRET || !process.env.MONGO_URI) {
     console.error("❌ Missing required environment variables in .env file");
     process.exit(1);
 }
 
-// ✅ Connect to MongoDB
+
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log("✅ Connected to MongoDB"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// ✅ User Schema & Model
+
 const UserSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true },
@@ -46,19 +46,19 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model("User", UserSchema);
 
-// ✅ Signup API
+
 app.post("/signup", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // ✅ Check if the user already exists
+        
         const existingUser = await User.findOne({ email });
         if (existingUser) return res.status(400).json({ message: "User already exists" });
 
-        // ✅ Hash the password
+       
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // ✅ Create a new user (Public users are not admins)
+        
         const user = await User.create({ email, password: hashedPassword, isAdmin: false });
 
         res.json({ success: true, message: "User registered successfully!" });
@@ -68,23 +68,23 @@ app.post("/signup", async (req, res) => {
 });
 
 
-// ✅ Login API
+
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user exists
+
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ success: false, message: "User not found" });
 
-        // Validate password
+     
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return res.status(400).json({ success: false, message: "Invalid credentials" });
 
-        // Generate JWT Token
+     
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-        // ✅ Always return JSON response
+        
         return res.json({ success: true, token, message: "Login successful!" });
 
     } catch (error) {
@@ -94,7 +94,7 @@ app.post("/login", async (req, res) => {
 });
 
 
-// ✅ Middleware to Protect Routes
+
 const authenticate = (req, res, next) => {
     const token = req.headers["authorization"];
     if (!token) return res.status(401).json({ message: "Unauthorized: No Token Provided" });
@@ -108,7 +108,7 @@ const authenticate = (req, res, next) => {
     }
 };
 
-// ✅ Function to Send Emails
+
 async function sendEmail(to, subject, text) {
     const transporter = createTransport({
         host: "smtp.gmail.com",
@@ -134,7 +134,7 @@ async function sendEmail(to, subject, text) {
     }
 }
 
-// ✅ File Upload Endpoint
+
 app.post("/upload", upload.single("file"), async (req, res) => {
     try {
         const file = req.file;
@@ -153,7 +153,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         }
 
         try {
-            unlinkSync(file.path); // Delete file after processing
+            unlinkSync(file.path); 
         } catch (err) {
             console.error("⚠️ Error deleting file:", err);
         }
@@ -165,7 +165,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     }
 });
 
-// ✅ Send Bulk Emails
+
 app.post("/send-emails", authenticate, async (req, res) => {
     try {
         const { emails, subject, message } = req.body;
@@ -191,6 +191,6 @@ app.post("/send-emails", authenticate, async (req, res) => {
     }
 });
 
-// ✅ Start Server
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
