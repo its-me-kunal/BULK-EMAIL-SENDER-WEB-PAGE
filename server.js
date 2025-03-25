@@ -17,7 +17,7 @@ const upload = multer({ dest: "uploads/" });
 
 // ✅ CORS Configuration
 app.use(cors({
-    origin: ["https://its-me-kunal.github.io"],
+    origin: ["https://its-me-kunal.github.io","http://127.0.0.1:5500", "http://localhost:3000"],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
