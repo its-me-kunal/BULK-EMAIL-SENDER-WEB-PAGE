@@ -102,7 +102,7 @@
 
                 const formData = new FormData();
                 formData.append("file", fileInput);
-                const uploadResponse = await fetch("http://localhost:5000/upload", { 
+                const uploadResponse = await fetch("https://its-me-kunal.github.io/upload", { 
                     method: "POST", 
                     body: formData,
                     headers: { "Authorization": token }
@@ -114,7 +114,7 @@
                 if (emails.length === 0) throw new Error("No valid emails found.");
                 
                 status.textContent = `Sending ${emails.length} emails...`;
-                const sendResponse = await fetch("http://localhost:5000/send-emails", {
+                const sendResponse = await fetch("https://its-me-kunal.github.io/send-emails", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": token },
                     body: JSON.stringify({ emails, subject, message })
