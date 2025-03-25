@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Email Sender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes swing {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg); }
+            50% { transform: rotate(-10deg); }
+            75% { transform: rotate(5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .swing {
+            animation: swing 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+    <div class="w-full max-w-3xl shadow-lg p-8 bg-white rounded-2xl border border-gray-300 transition-transform transform hover:scale-105 duration-300">
+        <h2 class="text-4xl font-extrabold text-gray-800 mb-6 text-center">📧 Bulk Email Sender</h2>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 font-medium">Upload Recipient List (Excel, CSV, TXT)</label>
+            <input type="file" id="email-file" accept=".csv, .txt, .xls, .xlsx" class="mt-2 w-full border border-gray-300 rounded-lg p-2 file:bg-blue-600 file:text-white file:border-none file:rounded-lg file:px-4 file:py-2 file:cursor-pointer hover:file:bg-blue-700 transition" onchange="updateFileName()">
+            <p id="file-name" class="text-gray-600 mt-1"></p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 font-medium">Subject</label>
+            <input type="text" id="subject" placeholder="Enter email subject..." class="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 font-medium">Message</label>
+            <textarea id="message" placeholder="Enter your message..." class="mt-2 w-full border border-gray-300 rounded-lg p-3 h-32 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition"></textarea>
+        </div>
+
+        <button onclick="sendEmails()" class="w-full bg-blue-600 text-white py-3 rounded-lg shadow-md font-semibold text-lg hover:bg-blue-700 active:bg-blue-800 transition relative">
+            <span id="btn-text">🚀 Send Emails</span>
+            <span id="loading" class="hidden absolute inset-0 flex items-center justify-center text-white">⏳ Sending...</span>
+        </button>
+        
+        <p id="status" class="mt-4 text-center text-gray-700"></p>
+    </div>
+
+    <!-- Success Notification -->
+    <div id="success-popup" class="fixed bottom-5 right-5 bg-green-600 text-white py-3 px-6 rounded-lg shadow-lg hidden opacity-0 transition-opacity duration-500">
+        ✅ Emails sent successfully!
+    </div>
+
+    <script>
+        function updateFileName() {
+            const fileInput = document.getElementById("email-file");
+            const fileNameDisplay = document.getElementById("file-name");
+            fileNameDisplay.textContent = fileInput.files[0] ? `Selected: ${fileInput.files[0].name}` : "";
+        }
+
+        async function sendEmails() {
+            const fileInput = document.getElementById("email-file").files[0];
+            const subject = document.getElementById("subject").value.trim();
+            const message = document.getElementById("message").value.trim();
+            const status = document.getElementById("status");
+            const btnText = document.getElementById("btn-text");
+            const loading = document.getElementById("loading");
+            const successPopup = document.getElementById("success-popup");
+
+            try {
+                if (!fileInput) throw new Error("Please upload a recipient list.");
+                if (!subject) throw new Error("Subject is required.");
+                if (!message) throw new Error("Message is required.");
+                
+                // Show Loading State
+                btnText.classList.add("hidden");
+                loading.classList.remove("hidden");
+                status.textContent = "Uploading file...";
+
+                const formData = new FormData();
+                formData.append("file", fileInput);
+                const uploadResponse = await fetch("http://localhost:5000/upload", { method: "POST", body: formData });
+                if (!uploadResponse.ok) throw new Error("File upload failed.");
+
+                const uploadData = await uploadResponse.json();
+                const emails = uploadData.emails || [];
+                if (emails.length === 0) throw new Error("No valid emails found.");
+                
+                status.textContent = `Sending ${emails.length} emails...`;
+                const sendResponse = await fetch("http://localhost:5000/send-emails", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ emails, subject, message })
+                });
+
+                const result = await sendResponse.json();
+                status.textContent = `✅ ${result.message}`;
+
+                // Show success notification with swing animation
+                successPopup.classList.remove("hidden", "opacity-0");
+                successPopup.classList.add("opacity-100", "swing");
+                setTimeout(() => {
+                    successPopup.classList.add("opacity-0");
+                    setTimeout(() => successPopup.classList.add("hidden"), 500);
+                }, 3000);
+            } catch (error) {
+                status.textContent = `❌ ${error.message}`;
+            } finally {
+                btnText.classList.remove("hidden");
+                loading.classList.add("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
